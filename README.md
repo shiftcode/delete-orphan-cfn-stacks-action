@@ -44,10 +44,10 @@ Make sure your CloudFormation Stacks are fully deletable (if autoDeleteBuckets=t
 
 ## Development
 ### testing
-To test the action locally: call `index.js` with the env vars for the action inputs
---> `INPUT_STACKNAMEPREFIX="ch-website" INPUT_GITHUBTOKEN="ghp_xxx"" INPUT_IGNORESTACKS="[]" node ./dist/index.js`
+To test the action locally: call `index.js` with the env vars for the action inputs and repo name:\
+ `GITHUB_REPOSITORY="shiftcode/my-repo" INPUT_STACKNAMEPREFIX="ch-website" INPUT_GITHUBTOKEN="ghp_xxx"" INPUT_IGNORESTACKS="[]" node ./dist/index.js`
 ### new version
-1) edit
-2) commit
+1) implement your changes
+2) commit with `npx commit`
 3) set tag `git tag -a -m "my fancy release" v0.0.X`
 4) push with tags `git push --follow-tags`
