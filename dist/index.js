@@ -25618,6 +25618,9 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.deleteOrphans = void 0;
 const branch_utils_1 = __nccwpck_require__(4010);
 async function deleteOrphans(githubHelper, cfnHelper, options) {
+    if (options.dry) {
+        console.info('DRY MODE');
+    }
     const [branches, stacks] = await Promise.all([
         githubHelper.listAllBranches(options.owner, options.repo),
         cfnHelper.listAllStacks(),
@@ -25649,7 +25652,9 @@ async function deleteOrphans(githubHelper, cfnHelper, options) {
         .map((s) => s.StackName);
     if (stacksToDelete.length) {
         console.info('stacks to delete:', stacksToDelete);
-        await Promise.all(stacksToDelete.map((s) => cfnHelper.deleteStack(s)));
+        if (!options.dry) {
+            await Promise.all(stacksToDelete.map((s) => cfnHelper.deleteStack(s)));
+        }
     }
     else {
         console.info('no orphan stacks detected');
@@ -25735,13 +25740,14 @@ async function run() {
     const stackNamePrefix = core.getInput('stackNamePrefix', { required: true });
     const ignoreStacks = JSON.parse(core.getInput('ignoreStacks', { required: true }));
     const githubToken = core.getInput('githubToken', { required: true });
+    const dry = core.getInput('dryMode') === 'true';
     if (!Array.isArray(ignoreStacks)) {
         throw new Error(`action input 'ignoreStacks' needs to be a json array. provided value '${core.getInput('ignoreStacks')}' could not be parsed`);
     }
     const ghHelper = new github_helper_1.GithubHelper(githubToken);
     const cfnHelper = new cfn_helper_1.CfnHelper();
     const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/');
-    return await delete_orphans_function_1.deleteOrphans(ghHelper, cfnHelper, { stackNamePrefix, ignoreStacks, owner, repo });
+    return await delete_orphans_function_1.deleteOrphans(ghHelper, cfnHelper, { stackNamePrefix, ignoreStacks, owner, repo, dry });
 }
 run()
     .then((deletedStacks) => core.setOutput('deletedStacks', deletedStacks))

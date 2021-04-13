@@ -63,4 +63,9 @@ describe('delete-orphans.function', () => {
     expect(cfnMock.deleteStack.mock.calls.length).toBe(1)
     expect(cfnMock.deleteStack.mock.calls[0][0]).toEqual('my-stack-pr2')
   })
+  it('supports dry mode', async () => {
+    const res = await deleteOrphans(<any>ghMock, <any>cfnMock, { ...opts, dry: true })
+    expect(res).toEqual(['my-stack-xx2', 'my-stack-pr2'])
+    expect(cfnMock.deleteStack.mock.calls.length).toBe(0)
+  })
 })

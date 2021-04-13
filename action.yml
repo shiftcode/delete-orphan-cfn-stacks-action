@@ -12,6 +12,10 @@ inputs:
     description: 'provide a list of stacks identifiers to ignore (JSON array). eg. ["xx1"]'
     required: true
     default: '[]'
+  dryMode:
+    description: 'do not actually delete stacks. only output the detected orphans'
+    required: false
+    default: 'false'
 outputs:
   deletedStacks:
     description: 'The stacks that were deleted (array of names)'

@@ -9,6 +9,7 @@ async function run() {
   const stackNamePrefix = core.getInput('stackNamePrefix', { required: true })
   const ignoreStacks: string[] = JSON.parse(core.getInput('ignoreStacks', { required: true }))
   const githubToken: string = core.getInput('githubToken', { required: true })
+  const dry: boolean = core.getInput('dryMode') === 'true'
 
   if (!Array.isArray(ignoreStacks)) {
     throw new Error(`action input 'ignoreStacks' needs to be a json array. provided value '${core.getInput('ignoreStacks')}' could not be parsed`)
@@ -18,7 +19,7 @@ async function run() {
   const cfnHelper = new CfnHelper()
   const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/')
 
-  return await deleteOrphans(ghHelper, cfnHelper, { stackNamePrefix, ignoreStacks, owner, repo })
+  return await deleteOrphans(ghHelper, cfnHelper, { stackNamePrefix, ignoreStacks, owner, repo, dry })
 }
 
 run()

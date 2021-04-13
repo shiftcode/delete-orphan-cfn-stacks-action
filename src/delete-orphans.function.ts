@@ -7,11 +7,13 @@ export interface DeleteOrphansOptions {
   ignoreStacks: string[]
   owner: string,
   repo: string
+  dry?: boolean
 }
 
 export async function deleteOrphans(githubHelper: GithubHelper,
                                     cfnHelper: CfnHelper,
                                     options: DeleteOrphansOptions): Promise<string[]> {
+  if (options.dry) { console.info('DRY MODE') }
 
   const [branches, stacks] = await Promise.all([
     githubHelper.listAllBranches(options.owner, options.repo),
@@ -49,7 +51,9 @@ export async function deleteOrphans(githubHelper: GithubHelper,
 
   if (stacksToDelete.length) {
     console.info('stacks to delete:', stacksToDelete)
-    await Promise.all(stacksToDelete.map((s) => cfnHelper.deleteStack(s)))
+    if (!options.dry) {
+      await Promise.all(stacksToDelete.map((s) => cfnHelper.deleteStack(s)))
+    }
   } else {
     console.info('no orphan stacks detected')
   }
