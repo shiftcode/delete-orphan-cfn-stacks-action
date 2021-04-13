@@ -1,10 +1,13 @@
 import * as core from '@actions/core'
+import * as github from '@actions/github'
 import { parseBranchName } from '@shiftcode/build-helper/branch.utils'
 import { CfnHelper } from './cfn-helper'
 import { GithubHelper } from './github-helper'
 
 
 export async function run() {
+  console.debug('github', github.context)
+
   const stackNamePrefix = core.getInput('stackNamePrefix', { required: true })
   const ignoreStacks: string[] = JSON.parse(core.getInput('ignoreStacks', { required: true }))
   const githubToken: string = core.getInput('githubToken', { required: true })
@@ -17,11 +20,8 @@ export async function run() {
   const githubHelper = new GithubHelper(githubToken)
   const cfnHelper = new CfnHelper()
 
-  const owner = 'shiftcode'
-  const repo = 'bag-covid-19-dashboard'
-
   const [branches, stacks] = await Promise.all([
-    githubHelper.listAllBranches(owner, repo),
+    githubHelper.listAllBranches(github.context.payload.repository.full_name),
     cfnHelper.listAllStacks(),
   ])
 
@@ -38,9 +38,15 @@ export async function run() {
     .filter((b) => !!b)
     .reduce((u, b) => [...u, `xx${b.branchId}`, `pr${b.branchId}`], [])
 
-  const stacksNames = stacks
+  console.info('existing branches: ', branches.map((b) => b.name))
+
+  const existingStacks = stacks
     .filter((stack) => stack.ParentId === undefined)// no nested-stacks
     .filter((stack) => stack.StackName.startsWith(stackNamePrefix))
+
+  console.debug('existing stacks:', existingStacks.map((s) => s.StackName))
+
+  const stacksNames = existingStacks
     .filter((stack) => stack.StackName.indexOf('master') === -1)
     .filter((stack) => {
       const stackId = /((xx|pr)\d+)/.exec(stack.StackName)[1]
@@ -51,7 +57,7 @@ export async function run() {
   if (stacksNames.length) {
     core.info(`stacks to delete: ${JSON.stringify(stacksNames)}`)
   } else {
-    core.info('no orphan stacks found')
+    core.info('no orphan stacks detected')
   }
 
   // todo: delete stacks
