@@ -31,7 +31,7 @@ export async function run() {
       try {
         return parseBranchName(b.name)
       } catch (err) {
-        console.warn(err.message)
+        core.warning(err.message)
         return null
       }
     })
@@ -48,10 +48,13 @@ export async function run() {
     })
     .map((stack) => stack.StackName)
 
-  console.log('stacks to delete', stacksNames)
+  if (stacksNames.length) {
+    core.info(`stacks to delete: ${JSON.stringify(stacksNames)}`)
+  } else {
+    core.info('no orphan stacks found')
+  }
 
   // todo: delete stacks
-
   core.setOutput('deletedStacks', stacksNames)
 }
 
