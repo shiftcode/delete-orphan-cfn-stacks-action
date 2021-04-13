@@ -1,0 +1,37 @@
+{
+  "name": "delete-orphan-cfn-stacks-action",
+  "version": "0.0.1",
+  "description": "github workflow action to delete orphan aws CloudFormation stacks",
+  "main": "dist/index.js",
+  "repository": "https://github.com/shiftcode/delete-cfn-stacks-action.git",
+  "author": "Simon Mumenthaler <simon.mumenthaler@shiftcode.ch>",
+  "private": true,
+  "scripts": {
+    "build": "ncc build ./src/index.ts -o ./dist",
+    "build:watch": "ncc build ./src/index.ts -o ./dist --watch",
+    "lint": "eslint --fix src/*.ts",
+    "precommit": "npm run lint && npm run build && git add dist/index.js",
+    "prettier": "prettier --write src/*.ts"
+  },
+  "dependencies": {
+    "@actions/core": "^1.2.6",
+    "@actions/github": "^4.0.0",
+    "@shiftcode/build-helper": "^3.0.2-pr84.2",
+    "node-fetch": "^2.6.1",
+    "aws-sdk": "^2.876.0",
+    "tslib": "^2.1.0"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^12.0.1",
+    "@commitlint/config-conventional": "^12.0.1",
+    "@commitlint/prompt-cli": "^12.0.1",
+    "@types/node": "^14.14.37",
+    "@typescript-eslint/eslint-plugin": "^4.20.0",
+    "@typescript-eslint/parser": "^4.20.0",
+    "@vercel/ncc": "^0.27.0",
+    "eslint": "^7.23.0",
+    "husky": "^4.3.8",
+    "prettier": "^2.2.1",
+    "typescript": "^4.2.3"
+  }
+}

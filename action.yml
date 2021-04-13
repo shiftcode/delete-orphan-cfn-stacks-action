@@ -1,0 +1,20 @@
+name: 'Delete Orphan CloudFormation Stacks'
+author: 'shiftcode GmbH'
+description: 'Delete orphan cloudformation stacks by prefix'
+inputs:
+  githubToken:
+    description: 'token for reading repository branches'
+    required: true
+  stackNamePrefix:
+    description: 'prefix of the stack names to delete'
+    required: true
+  ignoreStacks:
+    description: 'provide a list of stacks identifiers to ignore (JSON array). eg. ["xx1"]'
+    required: true
+    default: '[]'
+outputs:
+  deletedStacks:
+    description: 'The stacks that were deleted (array of names)'
+runs:
+  using: 'node12'
+  main: 'dist/index.js'
