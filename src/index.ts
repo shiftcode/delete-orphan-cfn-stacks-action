@@ -6,8 +6,7 @@ import { GithubHelper } from './github-helper'
 
 
 export async function run() {
-  console.debug('github', github.context)
-
+  // reading the inputs (inputs defined in action.yml)
   const stackNamePrefix = core.getInput('stackNamePrefix', { required: true })
   const ignoreStacks: string[] = JSON.parse(core.getInput('ignoreStacks', { required: true }))
   const githubToken: string = core.getInput('githubToken', { required: true })
@@ -31,37 +30,37 @@ export async function run() {
       try {
         return parseBranchName(b.name)
       } catch (err) {
-        core.warning(err.message)
+        console.warn(err.message)
         return null
       }
     })
     .filter((b) => !!b)
     .reduce((u, b) => [...u, `xx${b.branchId}`, `pr${b.branchId}`], [])
 
-  console.info('existing branches: ', branches.map((b) => b.name))
+  console.debug('existing branches: ', branches.map((b) => b.name))
 
   const existingStacks = stacks
-    .filter((stack) => stack.ParentId === undefined)// no nested-stacks
+    .filter((stack) => stack.ParentId === undefined) // get rid of the nested stacks
     .filter((stack) => stack.StackName.startsWith(stackNamePrefix))
 
   console.debug('existing stacks:', existingStacks.map((s) => s.StackName))
 
-  const stacksNames = existingStacks
+  const stacksToDelete = existingStacks
     .filter((stack) => stack.StackName.indexOf('master') === -1)
     .filter((stack) => {
       const stackId = /((xx|pr)\d+)/.exec(stack.StackName)[1]
       return !possibleBranchIds.includes(stackId) && !ignoreStacks.includes(stackId)
     })
-    .map((stack) => stack.StackName)
+    .map((s) => s.StackName)
 
-  if (stacksNames.length) {
-    core.info(`stacks to delete: ${JSON.stringify(stacksNames)}`)
+  if (stacksToDelete.length) {
+    console.info('stacks to delete:', stacksToDelete)
+    await Promise.all(stacksToDelete.map((s) => cfnHelper.deleteStack(s)))
   } else {
-    core.info('no orphan stacks detected')
+    console.info('no orphan stacks detected')
   }
 
-  // todo: delete stacks
-  core.setOutput('deletedStacks', stacksNames)
+  core.setOutput('deletedStacks', stacksToDelete)
 }
 
 run()

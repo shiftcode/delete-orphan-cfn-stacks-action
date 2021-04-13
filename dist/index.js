@@ -29560,6 +29560,9 @@ class CfnHelper {
             return resp.StackSummaries;
         }
     }
+    deleteStack(stackName) {
+        return this.cfn.deleteStack({ StackName: stackName }).promise();
+    }
 }
 exports.CfnHelper = CfnHelper;
 CfnHelper.COMPLETED_STATI = ['CREATE_COMPLETE', 'UPDATE_COMPLETE', 'ROLLBACK_COMPLETE', 'UPDATE_ROLLBACK_COMPLETE', 'IMPORT_COMPLETE'];
@@ -29634,7 +29637,6 @@ const branch_utils_1 = __nccwpck_require__(4010);
 const cfn_helper_1 = __nccwpck_require__(7578);
 const github_helper_1 = __nccwpck_require__(5366);
 async function run() {
-    console.debug('github', github.context);
     const stackNamePrefix = core.getInput('stackNamePrefix', { required: true });
     const ignoreStacks = JSON.parse(core.getInput('ignoreStacks', { required: true }));
     const githubToken = core.getInput('githubToken', { required: true });
@@ -29654,31 +29656,32 @@ async function run() {
             return branch_utils_1.parseBranchName(b.name);
         }
         catch (err) {
-            core.warning(err.message);
+            console.warn(err.message);
             return null;
         }
     })
         .filter((b) => !!b)
         .reduce((u, b) => [...u, `xx${b.branchId}`, `pr${b.branchId}`], []);
-    console.info('existing branches: ', branches.map((b) => b.name));
+    console.debug('existing branches: ', branches.map((b) => b.name));
     const existingStacks = stacks
         .filter((stack) => stack.ParentId === undefined)
         .filter((stack) => stack.StackName.startsWith(stackNamePrefix));
     console.debug('existing stacks:', existingStacks.map((s) => s.StackName));
-    const stacksNames = existingStacks
+    const stacksToDelete = existingStacks
         .filter((stack) => stack.StackName.indexOf('master') === -1)
         .filter((stack) => {
         const stackId = /((xx|pr)\d+)/.exec(stack.StackName)[1];
         return !possibleBranchIds.includes(stackId) && !ignoreStacks.includes(stackId);
     })
-        .map((stack) => stack.StackName);
-    if (stacksNames.length) {
-        core.info(`stacks to delete: ${JSON.stringify(stacksNames)}`);
+        .map((s) => s.StackName);
+    if (stacksToDelete.length) {
+        console.info('stacks to delete:', stacksToDelete);
+        await Promise.all(stacksToDelete.map((s) => cfnHelper.deleteStack(s)));
     }
     else {
-        core.info('no orphan stacks detected');
+        console.info('no orphan stacks detected');
     }
-    core.setOutput('deletedStacks', stacksNames);
+    core.setOutput('deletedStacks', stacksToDelete);
 }
 exports.run = run;
 run();

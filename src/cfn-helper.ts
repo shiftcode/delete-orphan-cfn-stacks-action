@@ -22,4 +22,8 @@ export class CfnHelper {
 
   }
 
+  deleteStack(stackName: string) {
+    return this.cfn.deleteStack({ StackName: stackName }).promise()
+  }
+
 }
