@@ -11,6 +11,7 @@
     "build:watch": "ncc build ./src/index.ts -o ./dist --watch",
     "lint": "eslint --fix src/*.ts",
     "precommit": "npm run lint && npm run test && npm run build && git add dist/index.js",
+    "prepare": "husky install",
     "prettier": "prettier --write src/*.ts",
     "test": "jest --silent",
     "test:watch": "jest --silent --watch"
@@ -34,7 +35,7 @@
     "@typescript-eslint/parser": "^4.20.0",
     "@vercel/ncc": "^0.27.0",
     "eslint": "^7.23.0",
-    "husky": "^4.3.8",
+    "husky": "^7.0.4",
     "jest": "^27.5.1",
     "prettier": "^2.2.1",
     "ts-jest": "^27.1.4",
