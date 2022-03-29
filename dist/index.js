@@ -26840,10 +26840,10 @@ async function deleteOrphans(githubHelper, cfnHelper, options) {
         cfnHelper.listAllStacks(),
     ]);
     const possibleBranchIds = branches
-        .filter((branch) => !branch_utilities_1.isProduction(branch))
+        .filter((branch) => !(0, branch_utilities_1.isProduction)(branch))
         .map((branch) => {
         try {
-            return branch_utilities_1.parseBranchName(branch);
+            return (0, branch_utilities_1.parseBranchName)(branch);
         }
         catch (err) {
             console.warn(err.message);
@@ -26910,7 +26910,7 @@ class GithubHelper {
             headers: { Authorization: `token ${this.githubToken}` },
         };
         const url = `https://api.github.com/repos/${owner}/${repo}/branches?page=${page}&per_page=${perPage}`;
-        const req = await node_fetch_1.default(url, opts);
+        const req = await (0, node_fetch_1.default)(url, opts);
         return req.json().then((branches) => branches.map((b) => b.name));
     }
 }
@@ -26926,7 +26926,11 @@ exports.GithubHelper = GithubHelper;
 
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
-    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
 }) : (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     o[k2] = m[k];
@@ -26959,7 +26963,7 @@ async function run() {
     const ghHelper = new github_helper_1.GithubHelper(githubToken);
     const cfnHelper = new cfn_helper_1.CfnHelper();
     const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/');
-    return await delete_orphans_function_1.deleteOrphans(ghHelper, cfnHelper, { stackNamePrefix, ignoreStacks, owner, repo, dry });
+    return await (0, delete_orphans_function_1.deleteOrphans)(ghHelper, cfnHelper, { stackNamePrefix, ignoreStacks, owner, repo, dry });
 }
 run()
     .then((deletedStacks) => core.setOutput('deletedStacks', deletedStacks))
