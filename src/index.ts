@@ -3,7 +3,6 @@ import { deleteOrphans } from './delete-orphans.function'
 import { CfnHelper } from './cfn-helper'
 import { GithubHelper } from './github-helper'
 
-
 async function run() {
   // reading the inputs (inputs defined in action.yml)
   const stackNamePrefix = core.getInput('stackNamePrefix', { required: true })
@@ -12,7 +11,11 @@ async function run() {
   const dry: boolean = core.getInput('dryMode') === 'true'
 
   if (!Array.isArray(ignoreStacks)) {
-    throw new Error(`action input 'ignoreStacks' needs to be a json array. provided value '${core.getInput('ignoreStacks')}' could not be parsed`)
+    throw new Error(
+      `action input 'ignoreStacks' needs to be a json array. provided value '${core.getInput(
+        'ignoreStacks',
+      )}' could not be parsed`,
+    )
   }
 
   const ghHelper = new GithubHelper(githubToken)
@@ -25,5 +28,3 @@ async function run() {
 run()
   .then((deletedStacks) => core.setOutput('deletedStacks', deletedStacks))
   .catch((err: Error) => core.setFailed(err.message))
-
-

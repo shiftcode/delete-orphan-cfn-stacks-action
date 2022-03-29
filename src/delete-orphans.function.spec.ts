@@ -2,7 +2,6 @@ import { StackSummary } from 'aws-sdk/clients/cloudformation'
 import { deleteOrphans, DeleteOrphansOptions } from './delete-orphans.function'
 
 describe('delete-orphans.function', () => {
-
   describe('with master', () => {
     const LIST_OF_STACKS = <StackSummary[]>[
       { StackName: 'my-other-stack-master' },
@@ -72,7 +71,6 @@ describe('delete-orphans.function', () => {
       expect(res).toEqual(['my-stack-xx2', 'my-stack-pr2'])
       expect(cfnMock.deleteStack.mock.calls.length).toBe(0)
     })
-
   })
 
   describe('with main', () => {
@@ -120,6 +118,5 @@ describe('delete-orphans.function', () => {
       const res = await deleteOrphans(<any>ghMock, <any>cfnMock, opts)
       expect(res.includes('my-stack-main')).toBeFalsy()
     })
-
   })
 })

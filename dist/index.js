@@ -26801,10 +26801,7 @@ class CfnHelper {
     async listAllStacks(statusFilter = CfnHelper.COMPLETED_STATI, nextToken = undefined) {
         const resp = await this.cfn.listStacks({ NextToken: nextToken, StackStatusFilter: statusFilter }).promise();
         if (resp.NextToken) {
-            return [
-                ...resp.StackSummaries,
-                ...await this.listAllStacks(statusFilter, resp.NextToken),
-            ];
+            return [...resp.StackSummaries, ...(await this.listAllStacks(statusFilter, resp.NextToken))];
         }
         else {
             return resp.StackSummaries;
@@ -26815,7 +26812,13 @@ class CfnHelper {
     }
 }
 exports.CfnHelper = CfnHelper;
-CfnHelper.COMPLETED_STATI = ['CREATE_COMPLETE', 'UPDATE_COMPLETE', 'ROLLBACK_COMPLETE', 'UPDATE_ROLLBACK_COMPLETE', 'IMPORT_COMPLETE'];
+CfnHelper.COMPLETED_STATI = [
+    'CREATE_COMPLETE',
+    'UPDATE_COMPLETE',
+    'ROLLBACK_COMPLETE',
+    'UPDATE_ROLLBACK_COMPLETE',
+    'IMPORT_COMPLETE',
+];
 
 
 /***/ }),
@@ -26896,10 +26899,7 @@ class GithubHelper {
     async listAllBranches(owner, repo, page = 1, perPage = 100) {
         const branches = await this.listBranches(owner, repo, page, perPage);
         if (branches.length) {
-            return [
-                ...branches,
-                ...await this.listAllBranches(owner, repo, page + 1, perPage),
-            ];
+            return [...branches, ...(await this.listAllBranches(owner, repo, page + 1, perPage))];
         }
         else {
             return branches;
@@ -26907,7 +26907,7 @@ class GithubHelper {
     }
     async listBranches(owner, repo, page = 1, perPage = 100) {
         const opts = {
-            headers: { 'Authorization': `token ${this.githubToken}` },
+            headers: { Authorization: `token ${this.githubToken}` },
         };
         const url = `https://api.github.com/repos/${owner}/${repo}/branches?page=${page}&per_page=${perPage}`;
         const req = await node_fetch_1.default(url, opts);
