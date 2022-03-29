@@ -5,7 +5,7 @@
 
 This action deletes all cloudformation xx/pr stacks in the provided region with the given name prefix when there's no corresponding branch.\
 The stage is transformed from the branch name (eg. `#85-my-feature` > `xx85` / `pr85`).\
-`master` stack is always ignored.
+`master`/`main` stack is always ignored.
 
 Make sure your CloudFormation Stacks are fully deletable (if autoDeleteBuckets=true also autoDeleteItems, etc.)
 
@@ -19,7 +19,7 @@ Make sure your CloudFormation Stacks are fully deletable (if autoDeleteBuckets=t
 **Required** `string` The prefix of the stack names to delete.
 
 #### `ignoreStacks`
-**Optional** `JSON String Array` of stack identifiers to ignore. `master` stack is always ignored.
+**Optional** `JSON String Array` of stack identifiers to ignore. `master` and `main` stack is always ignored.
 
 #### `dryMode`
 **Optional** `boolean` default false. If true no stacks will be deleted. Only output the detected orphans.

@@ -1,4 +1,4 @@
-import { parseBranchName } from '@shiftcode/build-helper/branch.utils'
+import { parseBranchName, isProduction } from '@shiftcode/branch-utilities'
 import { CfnHelper } from './cfn-helper'
 import { GithubHelper } from './github-helper'
 
@@ -21,7 +21,7 @@ export async function deleteOrphans(githubHelper: GithubHelper,
   ])
 
   const possibleBranchIds = branches
-    .filter((branch) => branch !== 'master')
+    .filter((branch) => !isProduction(branch))
     .map((branch) => {
       try {
         return parseBranchName(branch)
@@ -31,7 +31,8 @@ export async function deleteOrphans(githubHelper: GithubHelper,
       }
     })
     .filter((b) => !!b)
-    .reduce((u, b) => [...u, `xx${b.branchId}`, `pr${b.branchId}`], [])
+    .map((b) => [`xx${b.branchId}`, `pr${b.branchId}`])
+    .flat(1)
 
   console.debug('existing branches: ', branches)
 
@@ -41,11 +42,12 @@ export async function deleteOrphans(githubHelper: GithubHelper,
 
   console.debug('existing stacks:', existingStacks.map((s) => s.StackName))
 
+  // when there's no `xx` or `pr` with following numbers we don't have a match
+  // therefore prod/nonProd and master/main stacks are ignored
   const stacksToDelete = existingStacks
-    .filter((stack) => stack.StackName.indexOf('master') === -1)
     .filter((stack) => {
-      const stackId = /((xx|pr)\d+)/.exec(stack.StackName)[1]
-      return !possibleBranchIds.includes(stackId) && !options.ignoreStacks.includes(stackId)
+      const stackId = /((xx|pr)\d+)/.exec(stack.StackName)?.[1]
+      return stackId && !possibleBranchIds.includes(stackId) && !options.ignoreStacks.includes(stackId)
     })
     .map((s) => s.StackName)
 
