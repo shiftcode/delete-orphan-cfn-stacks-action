@@ -35360,6 +35360,320 @@ exports.debug = debug; // for test
 
 /***/ }),
 
+/***/ 17578:
+/***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
+
+/* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
+/* harmony export */   "X": () => (/* binding */ CfnHelper)
+/* harmony export */ });
+/* harmony import */ var _aws_sdk_client_cloudformation__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(15650);
+/* harmony import */ var _aws_sdk_client_cloudformation__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__nccwpck_require__.n(_aws_sdk_client_cloudformation__WEBPACK_IMPORTED_MODULE_0__);
+
+class CfnHelper {
+    static COMPLETED_STATI = [
+        _aws_sdk_client_cloudformation__WEBPACK_IMPORTED_MODULE_0__.StackStatus.CREATE_COMPLETE,
+        _aws_sdk_client_cloudformation__WEBPACK_IMPORTED_MODULE_0__.StackStatus.UPDATE_COMPLETE,
+        _aws_sdk_client_cloudformation__WEBPACK_IMPORTED_MODULE_0__.StackStatus.ROLLBACK_COMPLETE,
+        _aws_sdk_client_cloudformation__WEBPACK_IMPORTED_MODULE_0__.StackStatus.UPDATE_ROLLBACK_COMPLETE,
+        _aws_sdk_client_cloudformation__WEBPACK_IMPORTED_MODULE_0__.StackStatus.IMPORT_COMPLETE
+    ];
+    cfn;
+    constructor(cfn) {
+        this.cfn = cfn || new _aws_sdk_client_cloudformation__WEBPACK_IMPORTED_MODULE_0__.CloudFormation({});
+    }
+    async listAllStacks(statusFilter = CfnHelper.COMPLETED_STATI, nextToken = undefined) {
+        const resp = await this.cfn.listStacks({ NextToken: nextToken, StackStatusFilter: statusFilter });
+        if (resp.NextToken) {
+            return [...resp.StackSummaries, ...(await this.listAllStacks(statusFilter, resp.NextToken))];
+        }
+        else {
+            return resp.StackSummaries;
+        }
+    }
+    deleteStack(stackName) {
+        return this.cfn.deleteStack({ StackName: stackName });
+    }
+}
+
+
+/***/ }),
+
+/***/ 79154:
+/***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
+
+
+// EXPORTS
+__nccwpck_require__.d(__webpack_exports__, {
+  "I": () => (/* binding */ deleteOrphans)
+});
+
+;// CONCATENATED MODULE: ./node_modules/@shiftcode/branch-utilities/lib/base.utils.js
+
+
+/** regex to match the master branch */
+const REGEX_MASTER = /^master$/;
+/** regex to match the main branch */
+const REGEX_MAIN = /^main$/;
+/** regex to match our branch conventions with the following capture groups: fullMatch / branch id / branch name */
+const REGEX_BRANCH_NAME = /^[a-z]*\/?#(\d+)-(.*)/;
+/**
+ * create the {@link StageInfo} object from given stage
+ * @param stage the name either matching xx\d+ , pr\d+ or master|main
+ */
+function createStageInfo(stage) {
+    const isPr = isPullRequest(stage);
+    const isXx = isDevStage('xx');
+    const isProd = isProduction(stage);
+    if (!isPr && !isXx && !isProd) {
+        throw new Error('The provided stage neither is xx nor pr nor master/main.');
+    }
+    return { stage, isProd, isPr };
+}
+/**
+ * @param env process.env
+ * @return Returns the branch info containing the stage which is defined as xx|pr<branchId> or 'master' / 'main'
+ * @throws if master | main branch is used locally without override flag
+ */
+function getBranchInfo(env, branchName) {
+    let isPr = false;
+    if (isGithubWorkflow(env)) {
+        // github workflow environment
+        branchName = branchName !== null && branchName !== void 0 ? branchName : getGithubBranchName(env);
+        isPr = isGithubPullRequest(env);
+    }
+    else {
+        // local environment
+        branchName = branchName !== null && branchName !== void 0 ? branchName : gitBranchName();
+    }
+    if (isMasterBranch(branchName) || isMainBranch(branchName)) {
+        if (!isGithubWorkflow(env) && !isScOverrideActive(env)) {
+            throw new Error(`prod (master or main) branch can't be used locally`);
+        }
+        return {
+            branchName,
+            isProd: true,
+            isPr: false,
+            stage: branchName,
+            name: branchName,
+        };
+    }
+    else {
+        const { branchId, branchName: name } = parseBranchName(branchName);
+        return {
+            branchName,
+            isProd: false,
+            isPr,
+            stage: isPr ? `pr${branchId}` : `xx${branchId}`,
+            name,
+        };
+    }
+}
+/**
+ * @return Returns the branch name. The name is resolved depending on provided environment (github actions | local).
+ */
+function resolveBranchName(env) {
+    if (isGithubWorkflow(env)) {
+        // github workflow environment
+        return getGithubBranchName(env);
+    }
+    else {
+        // local environment
+        return gitBranchName();
+    }
+}
+/**
+ * @return Returns true if the given branch name (if any, otherwise we resolve depending on runtime,
+ * see @link resolveBranchName) is the master branch, false otherwise
+ * @throws Throws an error when this method is called locally without override flag to prevent from accidential execution
+ * on master branch
+ * @link resolveBranchName
+ */
+function isMasterBranch(branchName) {
+    return REGEX_MASTER.test(branchName);
+}
+/**
+ * @return Returns true if the given branch name (if any, otherwise we resolve depending on runtime,
+ * see @link resolveBranchName) is the main branch, false otherwise
+ * @throws Throws an error when this method is called locally without override flag to prevent from accidential execution
+ * on main branch
+ * @link resolveBranchName
+ */
+function isMainBranch(branchName) {
+    return REGEX_MAIN.test(branchName);
+}
+/**
+ * @return Returns an object containing branchId and branchName
+ * @throws Throws an error if given branchName does not match our convention
+ */
+function parseBranchName(branchName) {
+    const matches = branchName.match(REGEX_BRANCH_NAME);
+    if (matches) {
+        // [0] full match / [1] branch id / [2] branch name
+        const [, branchId, branchN] = matches;
+        return {
+            branchId: parseInt(branchId, 10),
+            branchName: branchN,
+        };
+    }
+    else {
+        throw new Error(`given branch name ${branchName} does not match our convention #<one or more digit>-<branch-name-with-kebap-case>`);
+    }
+}
+/**
+ * Determine if stage is production (master | main) or not.
+ *
+ * @param stageName the stage to evaluate
+ * @return returns true if the stage is 'master' or 'main', false if not
+ */
+function isProduction(stageName) {
+    return REGEX_MASTER.test(stageName) || REGEX_MAIN.test(stageName);
+}
+/**
+ * Determine if stage is a pull request.
+ *
+ * @param stageName the stage to evaluate
+ * @return true if it's a pull request, false if not
+ */
+function isPullRequest(stageName) {
+    return stageName.startsWith('pr');
+}
+function isDevStage(stageName) {
+    return stageName.startsWith('xx');
+}
+function isScOverrideActive(env) {
+    return typeof env === 'object' && env !== null && env.SC_OVERRIDE === 'true';
+}
+//# sourceMappingURL=base.utils.js.map
+// EXTERNAL MODULE: ./node_modules/@actions/core/lib/core.js
+var core = __nccwpck_require__(42186);
+;// CONCATENATED MODULE: ./src/delete-orphans.function.ts
+
+
+async function deleteOrphans(githubHelper, cfnHelper, options) {
+    if (options.dry) {
+        core.info('running in DRY mode, no stacks will be deleted');
+    }
+    const [branches, stacks] = await Promise.all([
+        githubHelper.listAllBranches(options.owner, options.repo),
+        cfnHelper.listAllStacks(),
+    ]);
+    const possibleBranchIds = branches
+        .filter((branch) => !isProduction(branch))
+        .map((branch) => {
+        try {
+            return parseBranchName(branch);
+        }
+        catch (err) {
+            core.error(err);
+            return null;
+        }
+    })
+        .filter((b) => !!b)
+        .map((b) => [`xx${b.branchId}`, `pr${b.branchId}`])
+        .flat(1);
+    core.info(`existing branches: ${branches}`);
+    const existingStacks = stacks
+        .filter((stack) => stack.ParentId === undefined)
+        .filter((stack) => stack.StackName.startsWith(options.stackNamePrefix));
+    core.info(`existing stacks: ${existingStacks.map((s) => s.StackName)}`);
+    const stacksToDelete = existingStacks
+        .filter((stack) => {
+        const stackId = /((xx|pr)\d+)/.exec(stack.StackName)?.[1];
+        return stackId && !possibleBranchIds.includes(stackId) && !options.ignoreStacks.includes(stackId);
+    })
+        .map((s) => s.StackName);
+    if (stacksToDelete.length) {
+        core.info(`stacks to delete: ${stacksToDelete}`);
+        if (!options.dry) {
+            await Promise.all(stacksToDelete.map((s) => cfnHelper.deleteStack(s)));
+        }
+    }
+    else {
+        core.info('no orphan stacks detected');
+    }
+    return stacksToDelete;
+}
+
+
+/***/ }),
+
+/***/ 65366:
+/***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
+
+/* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
+/* harmony export */   "u": () => (/* binding */ GithubHelper)
+/* harmony export */ });
+class GithubHelper {
+    githubToken;
+    constructor(githubToken) {
+        this.githubToken = githubToken;
+    }
+    async listAllBranches(owner, repo, page = 1, perPage = 100) {
+        const branches = await this.listBranches(owner, repo, page, perPage);
+        if (branches.length) {
+            return [...branches, ...(await this.listAllBranches(owner, repo, page + 1, perPage))];
+        }
+        else {
+            return branches;
+        }
+    }
+    async listBranches(owner, repo, page = 1, perPage = 100) {
+        const opts = {
+            headers: { Authorization: `token ${this.githubToken}` },
+        };
+        const url = `https://api.github.com/repos/${owner}/${repo}/branches?page=${page}&per_page=${perPage}`;
+        const req = await fetch(url, opts);
+        return req.json().then((branches) => branches.map((b) => b.name));
+    }
+}
+
+
+/***/ }),
+
+/***/ 6144:
+/***/ ((module, __unused_webpack___webpack_exports__, __nccwpck_require__) => {
+
+__nccwpck_require__.a(module, async (__webpack_handle_async_dependencies__, __webpack_async_result__) => { try {
+/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(42186);
+/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__nccwpck_require__.n(_actions_core__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _github_helper_js__WEBPACK_IMPORTED_MODULE_3__ = __nccwpck_require__(65366);
+/* harmony import */ var _cfn_helper_js__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(17578);
+/* harmony import */ var _delete_orphans_function_js__WEBPACK_IMPORTED_MODULE_2__ = __nccwpck_require__(79154);
+/* harmony import */ var _aws_sdk_client_cloudformation__WEBPACK_IMPORTED_MODULE_4__ = __nccwpck_require__(15650);
+/* harmony import */ var _aws_sdk_client_cloudformation__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__nccwpck_require__.n(_aws_sdk_client_cloudformation__WEBPACK_IMPORTED_MODULE_4__);
+
+
+
+
+
+try {
+    const stackNamePrefix = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('stackNamePrefix', { required: true });
+    const ignoreStacks = JSON.parse(_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('ignoreStacks', { required: true }));
+    const githubToken = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('githubToken', { required: true });
+    const dry = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('dryMode') === 'true';
+    if (!Array.isArray(ignoreStacks)) {
+        throw new Error(`action input 'ignoreStacks' needs to be a json array. provided value '${_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('ignoreStacks')}' could not be parsed`);
+    }
+    const ghHelper = new _github_helper_js__WEBPACK_IMPORTED_MODULE_3__/* .GithubHelper */ .u(githubToken);
+    const cfnHelper = new _cfn_helper_js__WEBPACK_IMPORTED_MODULE_1__/* .CfnHelper */ .X();
+    const deleteFailedStacks = await cfnHelper.listAllStacks([_aws_sdk_client_cloudformation__WEBPACK_IMPORTED_MODULE_4__.StackStatus.DELETE_FAILED]);
+    if (deleteFailedStacks.length) {
+        const details = deleteFailedStacks.map(stack => `${stack.StackName} (deletion time: ${stack.DeletionTime.toUTCString()})`).join(' / ');
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.notice(`found ${deleteFailedStacks.length} stacks in state DELETE_FAILED, here are the details: ${details}`);
+    }
+    const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/');
+    const deletedStacks = await (0,_delete_orphans_function_js__WEBPACK_IMPORTED_MODULE_2__/* .deleteOrphans */ .I)(ghHelper, cfnHelper, { stackNamePrefix, ignoreStacks, owner, repo, dry });
+    _actions_core__WEBPACK_IMPORTED_MODULE_0__.notice(`A delete action was initiated for the following stacks: ${deletedStacks}`);
+}
+catch (err) {
+    _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(err.message);
+}
+
+__webpack_async_result__();
+} catch(e) { __webpack_async_result__(e); } }, 1);
+
+/***/ }),
+
 /***/ 87578:
 /***/ ((module) => {
 
@@ -35555,277 +35869,113 @@ module.exports = JSON.parse('{"partitions":[{"id":"aws","outputs":{"dnsSuffix":"
 /******/ }
 /******/ 
 /************************************************************************/
+/******/ /* webpack/runtime/async module */
+/******/ (() => {
+/******/ 	var webpackQueues = typeof Symbol === "function" ? Symbol("webpack queues") : "__webpack_queues__";
+/******/ 	var webpackExports = typeof Symbol === "function" ? Symbol("webpack exports") : "__webpack_exports__";
+/******/ 	var webpackError = typeof Symbol === "function" ? Symbol("webpack error") : "__webpack_error__";
+/******/ 	var resolveQueue = (queue) => {
+/******/ 		if(queue && !queue.d) {
+/******/ 			queue.d = 1;
+/******/ 			queue.forEach((fn) => (fn.r--));
+/******/ 			queue.forEach((fn) => (fn.r-- ? fn.r++ : fn()));
+/******/ 		}
+/******/ 	}
+/******/ 	var wrapDeps = (deps) => (deps.map((dep) => {
+/******/ 		if(dep !== null && typeof dep === "object") {
+/******/ 			if(dep[webpackQueues]) return dep;
+/******/ 			if(dep.then) {
+/******/ 				var queue = [];
+/******/ 				queue.d = 0;
+/******/ 				dep.then((r) => {
+/******/ 					obj[webpackExports] = r;
+/******/ 					resolveQueue(queue);
+/******/ 				}, (e) => {
+/******/ 					obj[webpackError] = e;
+/******/ 					resolveQueue(queue);
+/******/ 				});
+/******/ 				var obj = {};
+/******/ 				obj[webpackQueues] = (fn) => (fn(queue));
+/******/ 				return obj;
+/******/ 			}
+/******/ 		}
+/******/ 		var ret = {};
+/******/ 		ret[webpackQueues] = x => {};
+/******/ 		ret[webpackExports] = dep;
+/******/ 		return ret;
+/******/ 	}));
+/******/ 	__nccwpck_require__.a = (module, body, hasAwait) => {
+/******/ 		var queue;
+/******/ 		hasAwait && ((queue = []).d = 1);
+/******/ 		var depQueues = new Set();
+/******/ 		var exports = module.exports;
+/******/ 		var currentDeps;
+/******/ 		var outerResolve;
+/******/ 		var reject;
+/******/ 		var promise = new Promise((resolve, rej) => {
+/******/ 			reject = rej;
+/******/ 			outerResolve = resolve;
+/******/ 		});
+/******/ 		promise[webpackExports] = exports;
+/******/ 		promise[webpackQueues] = (fn) => (queue && fn(queue), depQueues.forEach(fn), promise["catch"](x => {}));
+/******/ 		module.exports = promise;
+/******/ 		body((deps) => {
+/******/ 			currentDeps = wrapDeps(deps);
+/******/ 			var fn;
+/******/ 			var getResult = () => (currentDeps.map((d) => {
+/******/ 				if(d[webpackError]) throw d[webpackError];
+/******/ 				return d[webpackExports];
+/******/ 			}))
+/******/ 			var promise = new Promise((resolve) => {
+/******/ 				fn = () => (resolve(getResult));
+/******/ 				fn.r = 0;
+/******/ 				var fnQueue = (q) => (q !== queue && !depQueues.has(q) && (depQueues.add(q), q && !q.d && (fn.r++, q.push(fn))));
+/******/ 				currentDeps.map((dep) => (dep[webpackQueues](fnQueue)));
+/******/ 			});
+/******/ 			return fn.r ? promise : getResult();
+/******/ 		}, (err) => ((err ? reject(promise[webpackError] = err) : outerResolve(exports)), resolveQueue(queue)));
+/******/ 		queue && (queue.d = 0);
+/******/ 	};
+/******/ })();
+/******/ 
+/******/ /* webpack/runtime/compat get default export */
+/******/ (() => {
+/******/ 	// getDefaultExport function for compatibility with non-harmony modules
+/******/ 	__nccwpck_require__.n = (module) => {
+/******/ 		var getter = module && module.__esModule ?
+/******/ 			() => (module['default']) :
+/******/ 			() => (module);
+/******/ 		__nccwpck_require__.d(getter, { a: getter });
+/******/ 		return getter;
+/******/ 	};
+/******/ })();
+/******/ 
+/******/ /* webpack/runtime/define property getters */
+/******/ (() => {
+/******/ 	// define getter functions for harmony exports
+/******/ 	__nccwpck_require__.d = (exports, definition) => {
+/******/ 		for(var key in definition) {
+/******/ 			if(__nccwpck_require__.o(definition, key) && !__nccwpck_require__.o(exports, key)) {
+/******/ 				Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
+/******/ 			}
+/******/ 		}
+/******/ 	};
+/******/ })();
+/******/ 
+/******/ /* webpack/runtime/hasOwnProperty shorthand */
+/******/ (() => {
+/******/ 	__nccwpck_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
+/******/ })();
+/******/ 
 /******/ /* webpack/runtime/compat */
 /******/ 
 /******/ if (typeof __nccwpck_require__ !== 'undefined') __nccwpck_require__.ab = new URL('.', import.meta.url).pathname.slice(import.meta.url.match(/^file:\/\/\/\w:/) ? 1 : 0, -1) + "/";
 /******/ 
 /************************************************************************/
-var __webpack_exports__ = {};
-// This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
-(() => {
-
-// EXTERNAL MODULE: ./node_modules/@actions/core/lib/core.js
-var core = __nccwpck_require__(42186);
-;// CONCATENATED MODULE: ./node_modules/@shiftcode/branch-utilities/lib/base.utils.js
-
-
-/** regex to match the master branch */
-const REGEX_MASTER = /^master$/;
-/** regex to match the main branch */
-const REGEX_MAIN = /^main$/;
-/** regex to match our branch conventions with the following capture groups: fullMatch / branch id / branch name */
-const REGEX_BRANCH_NAME = /^[a-z]*\/?#(\d+)-(.*)/;
-/**
- * create the {@link StageInfo} object from given stage
- * @param stage the name either matching xx\d+ , pr\d+ or master|main
- */
-function createStageInfo(stage) {
-    const isPr = isPullRequest(stage);
-    const isXx = isDevStage('xx');
-    const isProd = isProduction(stage);
-    if (!isPr && !isXx && !isProd) {
-        throw new Error('The provided stage neither is xx nor pr nor master/main.');
-    }
-    return { stage, isProd, isPr };
-}
-/**
- * @param env process.env
- * @return Returns the branch info containing the stage which is defined as xx|pr<branchId> or 'master' / 'main'
- * @throws if master | main branch is used locally without override flag
- */
-function getBranchInfo(env, branchName) {
-    let isPr = false;
-    if (isGithubWorkflow(env)) {
-        // github workflow environment
-        branchName = branchName !== null && branchName !== void 0 ? branchName : getGithubBranchName(env);
-        isPr = isGithubPullRequest(env);
-    }
-    else {
-        // local environment
-        branchName = branchName !== null && branchName !== void 0 ? branchName : gitBranchName();
-    }
-    if (isMasterBranch(branchName) || isMainBranch(branchName)) {
-        if (!isGithubWorkflow(env) && !isScOverrideActive(env)) {
-            throw new Error(`prod (master or main) branch can't be used locally`);
-        }
-        return {
-            branchName,
-            isProd: true,
-            isPr: false,
-            stage: branchName,
-            name: branchName,
-        };
-    }
-    else {
-        const { branchId, branchName: name } = parseBranchName(branchName);
-        return {
-            branchName,
-            isProd: false,
-            isPr,
-            stage: isPr ? `pr${branchId}` : `xx${branchId}`,
-            name,
-        };
-    }
-}
-/**
- * @return Returns the branch name. The name is resolved depending on provided environment (github actions | local).
- */
-function resolveBranchName(env) {
-    if (isGithubWorkflow(env)) {
-        // github workflow environment
-        return getGithubBranchName(env);
-    }
-    else {
-        // local environment
-        return gitBranchName();
-    }
-}
-/**
- * @return Returns true if the given branch name (if any, otherwise we resolve depending on runtime,
- * see @link resolveBranchName) is the master branch, false otherwise
- * @throws Throws an error when this method is called locally without override flag to prevent from accidential execution
- * on master branch
- * @link resolveBranchName
- */
-function isMasterBranch(branchName) {
-    return REGEX_MASTER.test(branchName);
-}
-/**
- * @return Returns true if the given branch name (if any, otherwise we resolve depending on runtime,
- * see @link resolveBranchName) is the main branch, false otherwise
- * @throws Throws an error when this method is called locally without override flag to prevent from accidential execution
- * on main branch
- * @link resolveBranchName
- */
-function isMainBranch(branchName) {
-    return REGEX_MAIN.test(branchName);
-}
-/**
- * @return Returns an object containing branchId and branchName
- * @throws Throws an error if given branchName does not match our convention
- */
-function parseBranchName(branchName) {
-    const matches = branchName.match(REGEX_BRANCH_NAME);
-    if (matches) {
-        // [0] full match / [1] branch id / [2] branch name
-        const [, branchId, branchN] = matches;
-        return {
-            branchId: parseInt(branchId, 10),
-            branchName: branchN,
-        };
-    }
-    else {
-        throw new Error(`given branch name ${branchName} does not match our convention #<one or more digit>-<branch-name-with-kebap-case>`);
-    }
-}
-/**
- * Determine if stage is production (master | main) or not.
- *
- * @param stageName the stage to evaluate
- * @return returns true if the stage is 'master' or 'main', false if not
- */
-function isProduction(stageName) {
-    return REGEX_MASTER.test(stageName) || REGEX_MAIN.test(stageName);
-}
-/**
- * Determine if stage is a pull request.
- *
- * @param stageName the stage to evaluate
- * @return true if it's a pull request, false if not
- */
-function isPullRequest(stageName) {
-    return stageName.startsWith('pr');
-}
-function isDevStage(stageName) {
-    return stageName.startsWith('xx');
-}
-function isScOverrideActive(env) {
-    return typeof env === 'object' && env !== null && env.SC_OVERRIDE === 'true';
-}
-//# sourceMappingURL=base.utils.js.map
-;// CONCATENATED MODULE: ./src/delete-orphans.function.ts
-
-async function deleteOrphans(githubHelper, cfnHelper, options) {
-    if (options.dry) {
-        console.info('DRY MODE');
-    }
-    const [branches, stacks] = await Promise.all([
-        githubHelper.listAllBranches(options.owner, options.repo),
-        cfnHelper.listAllStacks(),
-    ]);
-    const possibleBranchIds = branches
-        .filter((branch) => !isProduction(branch))
-        .map((branch) => {
-        try {
-            return parseBranchName(branch);
-        }
-        catch (err) {
-            console.warn(err.message);
-            return null;
-        }
-    })
-        .filter((b) => !!b)
-        .map((b) => [`xx${b.branchId}`, `pr${b.branchId}`])
-        .flat(1);
-    console.debug('existing branches: ', branches);
-    const existingStacks = stacks
-        .filter((stack) => stack.ParentId === undefined)
-        .filter((stack) => stack.StackName.startsWith(options.stackNamePrefix));
-    console.debug('existing stacks:', existingStacks.map((s) => s.StackName));
-    const stacksToDelete = existingStacks
-        .filter((stack) => {
-        const stackId = /((xx|pr)\d+)/.exec(stack.StackName)?.[1];
-        return stackId && !possibleBranchIds.includes(stackId) && !options.ignoreStacks.includes(stackId);
-    })
-        .map((s) => s.StackName);
-    if (stacksToDelete.length) {
-        console.info('stacks to delete:', stacksToDelete);
-        if (!options.dry) {
-            await Promise.all(stacksToDelete.map((s) => cfnHelper.deleteStack(s)));
-        }
-    }
-    else {
-        console.info('no orphan stacks detected');
-    }
-    return stacksToDelete;
-}
-
-// EXTERNAL MODULE: ./node_modules/@aws-sdk/client-cloudformation/dist-cjs/index.js
-var dist_cjs = __nccwpck_require__(15650);
-;// CONCATENATED MODULE: ./src/cfn-helper.ts
-
-class CfnHelper {
-    static COMPLETED_STATI = [
-        dist_cjs.StackStatus.CREATE_COMPLETE,
-        dist_cjs.StackStatus.UPDATE_COMPLETE,
-        dist_cjs.StackStatus.ROLLBACK_COMPLETE,
-        dist_cjs.StackStatus.UPDATE_ROLLBACK_COMPLETE,
-        dist_cjs.StackStatus.IMPORT_COMPLETE
-    ];
-    cfn;
-    constructor(cfn) {
-        this.cfn = cfn || new dist_cjs.CloudFormation({});
-    }
-    async listAllStacks(statusFilter = CfnHelper.COMPLETED_STATI, nextToken = undefined) {
-        const resp = await this.cfn.listStacks({ NextToken: nextToken, StackStatusFilter: statusFilter });
-        if (resp.NextToken) {
-            return [...resp.StackSummaries, ...(await this.listAllStacks(statusFilter, resp.NextToken))];
-        }
-        else {
-            return resp.StackSummaries;
-        }
-    }
-    deleteStack(stackName) {
-        return this.cfn.deleteStack({ StackName: stackName });
-    }
-}
-
-;// CONCATENATED MODULE: ./src/github-helper.ts
-class GithubHelper {
-    githubToken;
-    constructor(githubToken) {
-        this.githubToken = githubToken;
-    }
-    async listAllBranches(owner, repo, page = 1, perPage = 100) {
-        const branches = await this.listBranches(owner, repo, page, perPage);
-        if (branches.length) {
-            return [...branches, ...(await this.listAllBranches(owner, repo, page + 1, perPage))];
-        }
-        else {
-            return branches;
-        }
-    }
-    async listBranches(owner, repo, page = 1, perPage = 100) {
-        const opts = {
-            headers: { Authorization: `token ${this.githubToken}` },
-        };
-        const url = `https://api.github.com/repos/${owner}/${repo}/branches?page=${page}&per_page=${perPage}`;
-        const req = await fetch(url, opts);
-        return req.json().then((branches) => branches.map((b) => b.name));
-    }
-}
-
-;// CONCATENATED MODULE: ./src/index.ts
-
-
-
-
-async function run() {
-    const stackNamePrefix = core.getInput('stackNamePrefix', { required: true });
-    const ignoreStacks = JSON.parse(core.getInput('ignoreStacks', { required: true }));
-    const githubToken = core.getInput('githubToken', { required: true });
-    const dry = core.getInput('dryMode') === 'true';
-    if (!Array.isArray(ignoreStacks)) {
-        throw new Error(`action input 'ignoreStacks' needs to be a json array. provided value '${core.getInput('ignoreStacks')}' could not be parsed`);
-    }
-    const ghHelper = new GithubHelper(githubToken);
-    const cfnHelper = new CfnHelper();
-    const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/');
-    return await deleteOrphans(ghHelper, cfnHelper, { stackNamePrefix, ignoreStacks, owner, repo, dry });
-}
-run()
-    .then((deletedStacks) => core.setOutput('deletedStacks', deletedStacks))
-    .catch((err) => core.setFailed(err.message));
-
-})();
-
+/******/ 
+/******/ // startup
+/******/ // Load entry module and return exports
+/******/ // This entry module used 'module' so it can't be inlined
+/******/ var __webpack_exports__ = __nccwpck_require__(6144);
+/******/ __webpack_exports__ = await __webpack_exports__;
+/******/ 

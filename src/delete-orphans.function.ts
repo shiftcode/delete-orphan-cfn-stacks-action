@@ -1,6 +1,7 @@
 import { parseBranchName, isProduction } from '@shiftcode/branch-utilities'
 import { CfnHelper } from './cfn-helper.js'
 import { GithubHelper } from './github-helper.js'
+import * as core from '@actions/core'
 
 export interface DeleteOrphansOptions {
   stackNamePrefix: string
@@ -16,7 +17,7 @@ export async function deleteOrphans(
   options: DeleteOrphansOptions,
 ): Promise<string[]> {
   if (options.dry) {
-    console.info('DRY MODE')
+    core.info('running in DRY mode, no stacks will be deleted')
   }
 
   const [branches, stacks] = await Promise.all([
@@ -30,7 +31,7 @@ export async function deleteOrphans(
       try {
         return parseBranchName(branch)
       } catch (err) {
-        console.warn(err.message)
+        core.error(err)
         return null
       }
     })
@@ -38,16 +39,13 @@ export async function deleteOrphans(
     .map((b) => [`xx${b.branchId}`, `pr${b.branchId}`])
     .flat(1)
 
-  console.debug('existing branches: ', branches)
+  core.info(`existing branches: ${branches}`)
 
   const existingStacks = stacks
     .filter((stack) => stack.ParentId === undefined) // get rid of the nested stacks
     .filter((stack) => stack.StackName.startsWith(options.stackNamePrefix))
 
-  console.debug(
-    'existing stacks:',
-    existingStacks.map((s) => s.StackName),
-  )
+  core.info(`existing stacks: ${existingStacks.map((s) => s.StackName)}`)
 
   // when there's no `xx` or `pr` with following numbers we don't have a match
   // therefore prod/nonProd and master/main stacks are ignored
@@ -59,12 +57,12 @@ export async function deleteOrphans(
     .map((s) => s.StackName)
 
   if (stacksToDelete.length) {
-    console.info('stacks to delete:', stacksToDelete)
+    core.info(`stacks to delete: ${stacksToDelete}`)
     if (!options.dry) {
       await Promise.all(stacksToDelete.map((s) => cfnHelper.deleteStack(s)))
     }
   } else {
-    console.info('no orphan stacks detected')
+    core.info('no orphan stacks detected')
   }
 
   return stacksToDelete
