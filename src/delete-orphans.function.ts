@@ -1,6 +1,6 @@
 import { parseBranchName, isProduction } from '@shiftcode/branch-utilities'
-import { CfnHelper } from './cfn-helper'
-import { GithubHelper } from './github-helper'
+import { CfnHelper } from './cfn-helper.js'
+import { GithubHelper } from './github-helper.js'
 
 export interface DeleteOrphansOptions {
   stackNamePrefix: string

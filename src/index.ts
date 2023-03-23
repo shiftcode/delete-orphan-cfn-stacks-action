@@ -1,7 +1,7 @@
 import * as core from '@actions/core'
-import { deleteOrphans } from './delete-orphans.function'
-import { CfnHelper } from './cfn-helper'
-import { GithubHelper } from './github-helper'
+import { deleteOrphans } from './delete-orphans.function.js'
+import { CfnHelper } from './cfn-helper.js'
+import { GithubHelper } from './github-helper.js'
 
 async function run() {
   // reading the inputs (inputs defined in action.yml)

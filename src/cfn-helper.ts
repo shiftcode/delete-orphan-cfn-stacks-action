@@ -1,24 +1,25 @@
-import { default as CloudFormation, StackStatus, StackSummary } from 'aws-sdk/clients/cloudformation'
+import { CloudFormation, StackStatus, StackSummary } from "@aws-sdk/client-cloudformation";
+import { DeleteStackCommandOutput } from "@aws-sdk/client-cloudformation/dist-types/commands/DeleteStackCommand.js";
 
 export class CfnHelper {
   static COMPLETED_STATI: StackStatus[] = [
-    'CREATE_COMPLETE',
-    'UPDATE_COMPLETE',
-    'ROLLBACK_COMPLETE',
-    'UPDATE_ROLLBACK_COMPLETE',
-    'IMPORT_COMPLETE',
+    StackStatus.CREATE_COMPLETE,
+    StackStatus.UPDATE_COMPLETE,
+    StackStatus.ROLLBACK_COMPLETE,
+    StackStatus.UPDATE_ROLLBACK_COMPLETE,
+    StackStatus.IMPORT_COMPLETE
   ]
   private readonly cfn: CloudFormation
 
   constructor(cfn?: CloudFormation) {
-    this.cfn = cfn || new CloudFormation()
+    this.cfn = cfn || new CloudFormation({})
   }
 
   async listAllStacks(
     statusFilter: StackStatus[] = CfnHelper.COMPLETED_STATI,
     nextToken: string | undefined = undefined,
   ): Promise<StackSummary[]> {
-    const resp = await this.cfn.listStacks({ NextToken: nextToken, StackStatusFilter: statusFilter }).promise()
+    const resp = await this.cfn.listStacks({ NextToken: nextToken, StackStatusFilter: statusFilter })
 
     if (resp.NextToken) {
       return [...resp.StackSummaries, ...(await this.listAllStacks(statusFilter, resp.NextToken))]
@@ -27,7 +28,7 @@ export class CfnHelper {
     }
   }
 
-  deleteStack(stackName: string) {
-    return this.cfn.deleteStack({ StackName: stackName }).promise()
+  deleteStack(stackName: string): Promise<DeleteStackCommandOutput> {
+    return this.cfn.deleteStack({ StackName: stackName })
   }
 }
