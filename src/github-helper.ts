@@ -1,3 +1,5 @@
+import fetch, { RequestInit } from 'node-fetch'
+
 export interface BranchesResponseItem {
   name: string
   commit: {
