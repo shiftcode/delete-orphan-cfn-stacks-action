@@ -5,9 +5,15 @@ extends:
   - "plugin:@typescript-eslint/eslint-recommended"
 parser: "@typescript-eslint/parser"
 parserOptions:
-  ecmaVersion: 2019
+  ecmaVersion: 2022
   sourceType: module
 plugins:
   - "@typescript-eslint"
 ignorePatterns:
   - "node_modules/*"
+overrides:
+  - files: ["*.ts"]
+    rules:
+      no-restricted-imports: 
+        - error
+        - patterns: ["@aws-sdk/client-cloudformation/*"]

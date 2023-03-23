@@ -35375,7 +35375,7 @@ class CfnHelper {
         _aws_sdk_client_cloudformation__WEBPACK_IMPORTED_MODULE_0__.StackStatus.UPDATE_COMPLETE,
         _aws_sdk_client_cloudformation__WEBPACK_IMPORTED_MODULE_0__.StackStatus.ROLLBACK_COMPLETE,
         _aws_sdk_client_cloudformation__WEBPACK_IMPORTED_MODULE_0__.StackStatus.UPDATE_ROLLBACK_COMPLETE,
-        _aws_sdk_client_cloudformation__WEBPACK_IMPORTED_MODULE_0__.StackStatus.IMPORT_COMPLETE
+        _aws_sdk_client_cloudformation__WEBPACK_IMPORTED_MODULE_0__.StackStatus.IMPORT_COMPLETE,
     ];
     cfn;
     constructor(cfn) {
@@ -35658,7 +35658,9 @@ try {
     const cfnHelper = new _cfn_helper_js__WEBPACK_IMPORTED_MODULE_1__/* .CfnHelper */ .X();
     const deleteFailedStacks = await cfnHelper.listAllStacks([_aws_sdk_client_cloudformation__WEBPACK_IMPORTED_MODULE_4__.StackStatus.DELETE_FAILED]);
     if (deleteFailedStacks.length) {
-        const details = deleteFailedStacks.map(stack => `${stack.StackName} (deletion time: ${stack.DeletionTime.toUTCString()})`).join(' / ');
+        const details = deleteFailedStacks
+            .map((stack) => `${stack.StackName} (deletion time: ${stack.DeletionTime.toUTCString()})`)
+            .join(' / ');
         _actions_core__WEBPACK_IMPORTED_MODULE_0__.notice(`found ${deleteFailedStacks.length} stacks in state DELETE_FAILED, here are the details: ${details}`);
     }
     const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/');

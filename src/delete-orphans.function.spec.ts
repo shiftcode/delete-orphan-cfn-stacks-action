@@ -1,6 +1,6 @@
-import {jest} from '@jest/globals'
+import { jest } from '@jest/globals'
 import { deleteOrphans, DeleteOrphansOptions } from './delete-orphans.function.js'
-import { StackSummary } from "@aws-sdk/client-cloudformation";
+import { StackSummary } from '@aws-sdk/client-cloudformation'
 
 describe('delete-orphans.function', () => {
   describe('with master', () => {

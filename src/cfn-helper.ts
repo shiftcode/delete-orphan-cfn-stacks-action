@@ -1,5 +1,4 @@
-import { CloudFormation, StackStatus, StackSummary } from "@aws-sdk/client-cloudformation";
-import { DeleteStackCommandOutput } from "@aws-sdk/client-cloudformation/dist-types/commands/DeleteStackCommand.js";
+import { CloudFormation, StackStatus, StackSummary, DeleteStackCommandOutput } from '@aws-sdk/client-cloudformation'
 
 export class CfnHelper {
   static COMPLETED_STATI: StackStatus[] = [
@@ -7,7 +6,7 @@ export class CfnHelper {
     StackStatus.UPDATE_COMPLETE,
     StackStatus.ROLLBACK_COMPLETE,
     StackStatus.UPDATE_ROLLBACK_COMPLETE,
-    StackStatus.IMPORT_COMPLETE
+    StackStatus.IMPORT_COMPLETE,
   ]
   private readonly cfn: CloudFormation
 

@@ -25,7 +25,9 @@ try {
   // print stacks in DELETE_FAILED state
   const deleteFailedStacks = await cfnHelper.listAllStacks([StackStatus.DELETE_FAILED])
   if (deleteFailedStacks.length) {
-    const details = deleteFailedStacks.map(stack => `${stack.StackName} (deletion time: ${stack.DeletionTime.toUTCString()})`).join(' / ')
+    const details = deleteFailedStacks
+      .map((stack) => `${stack.StackName} (deletion time: ${stack.DeletionTime.toUTCString()})`)
+      .join(' / ')
     core.notice(`found ${deleteFailedStacks.length} stacks in state DELETE_FAILED, here are the details: ${details}`)
   }
 
