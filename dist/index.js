@@ -42061,7 +42061,9 @@ try {
     }
     const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/');
     const deletedStacks = await (0,_delete_orphans_function_js__WEBPACK_IMPORTED_MODULE_2__/* .deleteOrphans */ .I)(ghHelper, cfnHelper, { stackNamePrefix, ignoreStacks, owner, repo, dry });
-    _actions_core__WEBPACK_IMPORTED_MODULE_0__.notice(`A delete action was initiated for the following stacks: ${deletedStacks}`);
+    if (deletedStacks.length) {
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.notice(`A delete action was initiated for the following stacks: ${deletedStacks}`);
+    }
 }
 catch (err) {
     _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(err.message);

@@ -34,7 +34,9 @@ try {
   const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/')
 
   const deletedStacks = await deleteOrphans(ghHelper, cfnHelper, { stackNamePrefix, ignoreStacks, owner, repo, dry })
-  core.notice(`A delete action was initiated for the following stacks: ${deletedStacks}`)
+  if(deletedStacks.length){
+    core.notice(`A delete action was initiated for the following stacks: ${deletedStacks}`)
+  }
 } catch (err) {
   core.setFailed(err.message)
 }
