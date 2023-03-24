@@ -41997,7 +41997,10 @@ function fixResponseChunkedTransferBadEnding(request, errorCallback) {
 	});
 }
 
+// EXTERNAL MODULE: ./node_modules/@actions/core/lib/core.js
+var core = __nccwpck_require__(42186);
 ;// CONCATENATED MODULE: ./src/github-helper.ts
+
 
 class GithubHelper {
     githubToken;
@@ -42019,7 +42022,13 @@ class GithubHelper {
         };
         const url = `https://api.github.com/repos/${owner}/${repo}/branches?page=${page}&per_page=${perPage}`;
         const req = await fetch(url, opts);
-        return req.json().then((branches) => branches.map((b) => b.name));
+        if (req.ok) {
+            const branches = await req.json();
+            return branches.map((b) => b.name);
+        }
+        else {
+            core.setFailed(`Failed to list branches for ${owner}/${repo} with status: ${req.status} / status text: ${req.statusText} and message ${await req.text()}`);
+        }
     }
 }
 
@@ -42032,9 +42041,9 @@ class GithubHelper {
 __nccwpck_require__.a(module, async (__webpack_handle_async_dependencies__, __webpack_async_result__) => { try {
 /* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(42186);
 /* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__nccwpck_require__.n(_actions_core__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var _github_helper_js__WEBPACK_IMPORTED_MODULE_3__ = __nccwpck_require__(90483);
-/* harmony import */ var _cfn_helper_js__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(17578);
-/* harmony import */ var _delete_orphans_function_js__WEBPACK_IMPORTED_MODULE_2__ = __nccwpck_require__(79154);
+/* harmony import */ var _github_helper_js__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(90483);
+/* harmony import */ var _cfn_helper_js__WEBPACK_IMPORTED_MODULE_2__ = __nccwpck_require__(17578);
+/* harmony import */ var _delete_orphans_function_js__WEBPACK_IMPORTED_MODULE_3__ = __nccwpck_require__(79154);
 /* harmony import */ var _aws_sdk_client_cloudformation__WEBPACK_IMPORTED_MODULE_4__ = __nccwpck_require__(15650);
 /* harmony import */ var _aws_sdk_client_cloudformation__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__nccwpck_require__.n(_aws_sdk_client_cloudformation__WEBPACK_IMPORTED_MODULE_4__);
 
@@ -42050,8 +42059,8 @@ try {
     if (!Array.isArray(ignoreStacks)) {
         throw new Error(`action input 'ignoreStacks' needs to be a json array. provided value '${_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('ignoreStacks')}' could not be parsed`);
     }
-    const ghHelper = new _github_helper_js__WEBPACK_IMPORTED_MODULE_3__/* .GithubHelper */ .u(githubToken);
-    const cfnHelper = new _cfn_helper_js__WEBPACK_IMPORTED_MODULE_1__/* .CfnHelper */ .X();
+    const ghHelper = new _github_helper_js__WEBPACK_IMPORTED_MODULE_1__/* .GithubHelper */ .u(githubToken);
+    const cfnHelper = new _cfn_helper_js__WEBPACK_IMPORTED_MODULE_2__/* .CfnHelper */ .X();
     const deleteFailedStacks = await cfnHelper.listAllStacks([_aws_sdk_client_cloudformation__WEBPACK_IMPORTED_MODULE_4__.StackStatus.DELETE_FAILED]);
     if (deleteFailedStacks.length) {
         const details = deleteFailedStacks
@@ -42060,7 +42069,7 @@ try {
         _actions_core__WEBPACK_IMPORTED_MODULE_0__.notice(`found ${deleteFailedStacks.length} stacks in state DELETE_FAILED, here are the details: ${details}`);
     }
     const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/');
-    const deletedStacks = await (0,_delete_orphans_function_js__WEBPACK_IMPORTED_MODULE_2__/* .deleteOrphans */ .I)(ghHelper, cfnHelper, { stackNamePrefix, ignoreStacks, owner, repo, dry });
+    const deletedStacks = await (0,_delete_orphans_function_js__WEBPACK_IMPORTED_MODULE_3__/* .deleteOrphans */ .I)(ghHelper, cfnHelper, { stackNamePrefix, ignoreStacks, owner, repo, dry });
     if (deletedStacks.length) {
         _actions_core__WEBPACK_IMPORTED_MODULE_0__.notice(`A delete action was initiated for the following stacks: ${deletedStacks}`);
     }

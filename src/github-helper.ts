@@ -1,4 +1,5 @@
 import fetch, { RequestInit } from 'node-fetch'
+import * as core from '@actions/core'
 
 export interface BranchesResponseItem {
   name: string
@@ -12,7 +13,8 @@ export interface BranchesResponseItem {
 export type BranchesResponse = BranchesResponseItem[]
 
 export class GithubHelper {
-  constructor(private readonly githubToken: string) {}
+  constructor(private readonly githubToken: string) {
+  }
 
   /**
    * list all branches (with multiple requests if necessary)
@@ -33,6 +35,12 @@ export class GithubHelper {
     }
     const url = `https://api.github.com/repos/${owner}/${repo}/branches?page=${page}&per_page=${perPage}`
     const req = await fetch(url, opts)
-    return req.json().then((branches: BranchesResponse) => branches.map((b) => b.name))
+
+    if (req.ok) {
+      const branches: BranchesResponse = await req.json() as BranchesResponse
+      return branches.map((b) => b.name)
+    } else {
+      core.setFailed(`Failed to list branches for ${owner}/${repo} with status: ${req.status} / status text: ${req.statusText} and message ${await req.text()}`)
+    }
   }
 }

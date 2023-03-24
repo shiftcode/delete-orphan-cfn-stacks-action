@@ -16,7 +16,7 @@
     "prettier": "prettier --write src/*.ts",
     "test": "NODE_OPTIONS=\"--experimental-vm-modules --trace-warnings\" npx jest --passWithNoTests --no-cache",
     "test:watch": "jest --silent --watch",
-    "run:local": "npm run build && GITHUB_REPOSITORY='<shiftcode/ch-website>' INPUT_STACKNAMEPREFIX='<sc-corporate-website>' INPUT_GITHUBTOKEN='<github-token>' DRY_MODE='true' INPUT_IGNORESTACKS='[]' node ./dist/index.js"
+    "run:local": "npm run build && GITHUB_REPOSITORY='shiftcode/uis-data-browser-backend' INPUT_STACKNAMEPREFIX='uis-data-browser-backend' INPUT_GITHUBTOKEN=$GITHUB_TOKEN DRY_MODE='true' INPUT_IGNORESTACKS='[]' node ./dist/index.js"
   },
   "dependencies": {
     "@actions/core": "^1.10.0",

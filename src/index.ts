@@ -11,6 +11,7 @@ try {
   const githubToken: string = core.getInput('githubToken', { required: true })
   const dry: boolean = core.getInput('dryMode') === 'true'
 
+  
   if (!Array.isArray(ignoreStacks)) {
     throw new Error(
       `action input 'ignoreStacks' needs to be a json array. provided value '${core.getInput(
