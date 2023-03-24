@@ -37,6 +37,8 @@ try {
   const deletedStacks = await deleteOrphans(ghHelper, cfnHelper, { stackNamePrefix, ignoreStacks, owner, repo, dry })
   if(deletedStacks.length){
     core.notice(`A delete action was initiated for the following stacks: ${deletedStacks}`)
+  }else{
+    core.notice(`No stacks to delete`)
   }
 } catch (err) {
   core.setFailed(err.message)

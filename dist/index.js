@@ -39793,7 +39793,7 @@ var core = __nccwpck_require__(42186);
 
 async function deleteOrphans(githubHelper, cfnHelper, options) {
     if (options.dry) {
-        core.info('running in DRY mode, no stacks will be deleted');
+        core.notice('running in DRY mode, no stacks will be deleted');
     }
     const [branches, stacks] = await Promise.all([
         githubHelper.listAllBranches(options.owner, options.repo),
@@ -39827,7 +39827,7 @@ async function deleteOrphans(githubHelper, cfnHelper, options) {
     if (stacksToDelete.length) {
         core.info(`stacks to delete: ${stacksToDelete}`);
         if (!options.dry) {
-            await Promise.all(stacksToDelete.map((s) => cfnHelper.deleteStack(s)));
+            await Promise.allSettled(stacksToDelete.map((s) => cfnHelper.deleteStack(s)));
         }
     }
     else {
@@ -42072,6 +42072,9 @@ try {
     const deletedStacks = await (0,_delete_orphans_function_js__WEBPACK_IMPORTED_MODULE_3__/* .deleteOrphans */ .I)(ghHelper, cfnHelper, { stackNamePrefix, ignoreStacks, owner, repo, dry });
     if (deletedStacks.length) {
         _actions_core__WEBPACK_IMPORTED_MODULE_0__.notice(`A delete action was initiated for the following stacks: ${deletedStacks}`);
+    }
+    else {
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.notice(`No stacks to delete`);
     }
 }
 catch (err) {

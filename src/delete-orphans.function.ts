@@ -17,7 +17,7 @@ export async function deleteOrphans(
   options: DeleteOrphansOptions,
 ): Promise<string[]> {
   if (options.dry) {
-    core.info('running in DRY mode, no stacks will be deleted')
+    core.notice('running in DRY mode, no stacks will be deleted')
   }
 
   const [branches, stacks] = await Promise.all([
@@ -59,7 +59,7 @@ export async function deleteOrphans(
   if (stacksToDelete.length) {
     core.info(`stacks to delete: ${stacksToDelete}`)
     if (!options.dry) {
-      await Promise.all(stacksToDelete.map((s) => cfnHelper.deleteStack(s)))
+      await Promise.allSettled(stacksToDelete.map((s) => cfnHelper.deleteStack(s)))
     }
   } else {
     core.info('no orphan stacks detected')
