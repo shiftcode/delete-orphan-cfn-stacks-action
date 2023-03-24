@@ -1,6 +1,6 @@
 {
   "name": "delete-orphan-cfn-stacks-action",
-  "version": "1.0.0",
+  "version": "0.0.0",
   "description": "github workflow action to delete orphan aws CloudFormation stacks",
   "main": "dist/index.js",
   "repository": "https://github.com/shiftcode/delete-cfn-stacks-action.git",
