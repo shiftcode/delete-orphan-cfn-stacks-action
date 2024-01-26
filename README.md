@@ -27,12 +27,10 @@ Make sure your CloudFormation Stacks are fully deletable (if autoDeleteBuckets=t
 ### Example workflow step config
 ```
 - name: Configure AWS Credentials
-  uses: aws-actions/configure-aws-credentials@v1
+  uses: aws-actions/configure-aws-credentials@v4
   with:
-    aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-    aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
     role-to-assume: 'arn:aws:iam::{ACCOUNT_ID}:role/{ROLE_NAME}'
-    aws-region: eu-central-1
+    aws-region: {AWS_REGION}
 - name: Delete Orphan Stacks
   uses: shiftcode/delete-orphan-cfn-stacks-action@v0.0.X
   with:

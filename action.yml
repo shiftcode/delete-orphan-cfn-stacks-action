@@ -20,5 +20,5 @@ outputs:
   deletedStacks:
     description: 'The stacks that were deleted (array of names)'
 runs:
-  using: 'node16'
+  using: 'node20'
   main: 'dist/index.js'
