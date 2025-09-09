@@ -1,4 +1,3 @@
-import fetch, { RequestInit } from 'node-fetch'
 import * as core from '@actions/core'
 
 export interface BranchesResponseItem {

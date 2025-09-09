@@ -1,6 +1,8 @@
 import { jest } from '@jest/globals'
 import { deleteOrphans, DeleteOrphansOptions } from './delete-orphans.function.js'
 import { StackSummary } from '@aws-sdk/client-cloudformation'
+import { CfnHelper } from './cfn-helper.js'
+import { GithubHelper } from './github-helper.js'
 
 describe('delete-orphans.function', () => {
   describe('with master', () => {
@@ -16,16 +18,12 @@ describe('delete-orphans.function', () => {
       { StackName: 'my-stack-pr2' },
       { StackName: 'my-stack-nonProd' },
       { StackName: 'my-stack-prod' },
+      { StackName: 'my-stack-xx789' },
     ]
-    const LIST_OF_BRANCHES: string[] = ['master', '#01-dev', '#222-basic-auth']
+    const LIST_OF_BRANCHES: string[] = ['master', '#01-dev', '#222-basic-auth', 'copilot/fix-789']
 
-    let ghMock: {
-      listAllBranches: jest.Mock
-    }
-    let cfnMock: {
-      listAllStacks: jest.Mock
-      deleteStack: jest.Mock
-    }
+    let ghMock: Record<keyof GithubHelper, jest.Mock>
+    let cfnMock: Record<keyof CfnHelper, jest.Mock>
 
     beforeEach(() => {
       ghMock = {
