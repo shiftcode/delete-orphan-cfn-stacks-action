@@ -13,8 +13,7 @@ export interface BranchesResponseItem {
 export type BranchesResponse = BranchesResponseItem[]
 
 export class GithubHelper {
-  constructor(private readonly githubToken: string) {
-  }
+  constructor(private readonly githubToken: string) {}
 
   /**
    * list all branches (with multiple requests if necessary)
@@ -37,10 +36,14 @@ export class GithubHelper {
     const req = await fetch(url, opts)
 
     if (req.ok) {
-      const branches: BranchesResponse = await req.json() as BranchesResponse
+      const branches: BranchesResponse = <BranchesResponse>await req.json()
       return branches.map((b) => b.name)
     } else {
-      core.setFailed(`Failed to list branches for ${owner}/${repo} with status: ${req.status} / status text: ${req.statusText} and message ${await req.text()}`)
+      core.setFailed(
+        `Failed to list branches for ${owner}/${repo} with status: ${req.status} / status text: ${
+          req.statusText
+        } and message ${await req.text()}`,
+      )
     }
   }
 }

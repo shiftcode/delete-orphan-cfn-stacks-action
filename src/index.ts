@@ -11,7 +11,6 @@ try {
   const githubToken: string = core.getInput('githubToken', { required: true })
   const dry: boolean = core.getInput('dryMode') === 'true'
 
-  
   if (!Array.isArray(ignoreStacks)) {
     throw new Error(
       `action input 'ignoreStacks' needs to be a json array. provided value '${core.getInput(
@@ -35,9 +34,9 @@ try {
   const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/')
 
   const deletedStacks = await deleteOrphans(ghHelper, cfnHelper, { stackNamePrefix, ignoreStacks, owner, repo, dry })
-  if(deletedStacks.length){
+  if (deletedStacks.length) {
     core.notice(`A delete action was initiated for the following stacks: ${deletedStacks}`)
-  }else{
+  } else {
     core.notice(`No stacks to delete`)
   }
 } catch (err) {
