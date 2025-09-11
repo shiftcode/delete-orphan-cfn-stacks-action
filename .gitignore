@@ -12,3 +12,6 @@ yarn-error.log
 # System Files
 .DS_Store
 Thumbs.db
+
+# unused build output
+/dist/package.json
