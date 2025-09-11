@@ -61212,7 +61212,7 @@ function parseBranchName(branchName) {
  * @return returns true if the stage is 'master' or 'main', false if not
  */
 function isProduction(stageName) {
-    return REGEX_MASTER.test(stageName) ?? REGEX_MAIN.test(stageName);
+    return REGEX_MASTER.test(stageName) || REGEX_MAIN.test(stageName);
 }
 /**
  * Determine if stage is a pull request.
